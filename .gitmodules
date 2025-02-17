@@ -1,0 +1,6 @@
+[submodule "third_party/co_tracker/co-tracker"]
+	path = third_party/co_tracker/co-tracker
+	url = https://github.com/facebookresearch/co-tracker
+[submodule "third_party/sam2"]
+	path = third_party/sam2
+	url = https://github.com/facebookresearch/sam2
