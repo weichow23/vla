@@ -205,7 +205,40 @@ def proj_3d_to_2d(points_3d, R, t, K):
     points_2d = np.column_stack((u, v))
     return points_2d
 
+def decompose_projection_matrix(P):
+    """
+    Decomposes a 3x4 camera projection matrix P into intrinsic matrix K,
+    rotation matrix R, and translation vector t.
 
+    Args:
+        P (numpy.ndarray): 3x4 projection matrix.
+
+    Returns:
+        K (numpy.ndarray): 3x3 camera intrinsic matrix.
+        R (numpy.ndarray): 3x3 rotation matrix.
+        t (numpy.ndarray): 3x1 translation vector.
+    """
+
+    # Extract the left 3x3 matrix (camera matrix M)
+    M = P[:, :3]
+
+    # Perform RQ decomposition to get K and R
+    R, K = np.linalg.qr(np.linalg.inv(M))  # Equivalent to RQ decomposition
+    K = np.linalg.inv(K)
+    R = np.linalg.inv(R)
+
+    # Ensure K has positive diagonal elements
+    T = np.diag(np.sign(np.diag(K)))
+    K = K @ T
+    R = T @ R  # Adjust rotation to compensate for flipped K
+
+    # Extract translation
+    t = np.linalg.inv(K) @ P[:, 3]
+
+    # Normalize K to ensure K(3,3) = 1
+    K /= K[2, 2]
+
+    return K, R, t
 
 # ---------------------------------------------------------------------
 # Example Usage

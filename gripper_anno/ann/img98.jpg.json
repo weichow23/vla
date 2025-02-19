@@ -1,0 +1,29 @@
+{
+    "description": "",
+    "tags": [],
+    "size": {
+        "height": 480,
+        "width": 640
+    },
+    "objects": [
+        {
+            "id": 1640873973,
+            "classId": 13746347,
+            "objectId": null,
+            "description": "",
+            "geometryType": "bitmap",
+            "labelerLogin": "Kyrie",
+            "createdAt": "2025-02-19T08:02:16.410Z",
+            "updatedAt": "2025-02-19T08:02:24.808Z",
+            "tags": [],
+            "classTitle": "gripper",
+            "bitmap": {
+                "data": "eNoBcwSM+4lQTkcNChoKAAAADUlIRFIAAACkAAAAWwgGAAAA/XEujQAAAAFzUkdCAK7OHOkAAAQtSURBVHhe7dztkpswDIXhcP8XnR0yJc0HBMmWZMm8/dPOjmPsoweZZLe73P79ud/v9/Wfy7Is29f4mwSiE3ji20DuLQCk0WW57vUeIH9hBOh1cYzYeRNIkI4o1TWuaQYSpNcA471LV5Cfi+dZ1Luc9edftM+P1lsGqXWitecbDvIoPqDWhtW6+rQgpRsCrjSpGuPKg6TD1oAmXWXomxrpoqzG0T2tkoybZ2qQa4ygjMNkcaXpQYLSgkncHKLvZcctx+9KdEq/bC1nBqRlmszVncBlQHJ0d1sJmQCQITFzEWkCbz+MO/rbiNJFt47jObI1ubjXXQokx3YcrNYrAbI1OV7nksDX/5/h2HbJmUmFCQBSGBTDYhIAZEzOXEWYwO5/eeXYFqbHMPMEAGkeKRP2JHD4SwFm7pJ8HtlDxve1gPTNl9mVCfz8tSkzdkm6o1JI8HBABgfO5X4ncPqLpWbrknTI3LcEIHPX53KrOwW5JjJLl6Q7nvv+rHV0ZoA8r9GlRmiajwdWEchZuqRHgLNp1YA82ntPzoCcTVTnfixAbktogSkGWb1LtoTTWdtyL7fE+Ll5af6ALMfGb8GeIKVdUwWycpeU3qF+5c4/cwTI1xT2anIJkGCU3QzRIPe6phpkxS4JyNwgX2E2gayEEowyjBlqutYKkPJ6TT9y1JFt0iEz3FESIT03nWT+mcaUB5kdJRjlt8tojM8uKV/y8cgsm2n9MNYig+pzZKlh8zPkawGybAaQ7bdFlhqagMx4dHNc63BOBzIbSkAC8pFAmjut4yMtXSnnGJ2mbtZxZtgY3VFf1Sx1M3uGzPQmB5CA/Epg1B0HRj3GLI9aXd86lGx7BEpASirzPmZEnfZW6Q5yxJ0HyJogt7q5PEN+RhJ1B4JRj3FE0zjqjuvXQ0BGbRqQgFQl4Nkpwagqxdtgz7pIVxV6ZHt/JARGadn3x10apPXxDcY+jNb1aFnNaw3DniE93uiAsaX8368Z3SFTgOy9M8Fog7G3DharSANy24z2DgWjBYP/c2jzt7367ZYOpAYmGK05jP8JrbQgz96Ng9Eeo6YZeFz9s6bD3tRIN7cdJ2CUJtY2btSxXQ5kW7y8SpsAILWJMd41gREg90699Ee2axWY/JkAIMGQKgFApioHi4kGefQmlSMbi48EAAmEVAlEgvz1ER4dMhWLcYsB5LjsufJOAlEgz77BQYeEZ+gzJCABJ0ogokOeYVwXSocUlesag7xRAvIajsx2CUizKJnIIgFPkJLuyJFtUcWJ5gDkRMWcYSteIKXdkQ45gyLDPQDSMEym6k/AA6SmO9Ih+2s41QyAnKqc9TdjDVLbHemQ9Q2Z78AKZQtGQJqXs/6EFiBbMQKyvh/zHfSC7MEISPNy1p+wB2QvRkDW9+OygxaUFhgB6VLO+pNqQVphXJP7A46G9FP79wFrAAAAAElFTkSuQmCC8f4ewA==",
+                "origin": [
+                    237,
+                    159
+                ]
+            }
+        }
+    ]
+}

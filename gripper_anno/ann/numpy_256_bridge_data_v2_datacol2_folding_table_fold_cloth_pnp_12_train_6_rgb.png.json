@@ -1,0 +1,29 @@
+{
+    "description": "",
+    "tags": [],
+    "size": {
+        "height": 256,
+        "width": 256
+    },
+    "objects": [
+        {
+            "id": 1641133710,
+            "classId": 13746347,
+            "objectId": null,
+            "description": "",
+            "geometryType": "bitmap",
+            "labelerLogin": "Kyrie",
+            "createdAt": "2025-02-19T19:12:03.164Z",
+            "updatedAt": "2025-02-19T19:12:12.962Z",
+            "tags": [],
+            "classTitle": "gripper",
+            "bitmap": {
+                "data": "eNoB6AAX/4lQTkcNChoKAAAADUlIRFIAAAAbAAAAFwgGAAAA+hY0LgAAAAFzUkdCAK7OHOkAAACiSURBVEhL7ZZBDoAwCATl/4/G1MSGIrgUsfGgtxpgFqgCbYUPM7MMR0Q0nCtYGuLFJGSo1elAyH/ILGpsQaO+JxBm1g1V/dv7ZbBpUCtNxKmkhFlYRKD1CaQy+2GtlLLfr5dxGezyb0TNfnLtl8EskbBn2cyWwbxJUZ7Z3Uj6DsxT6d1gNGiPHcFyRo5o37BWgzRMikTC+gCWCk61UefZZWkHnpesCN8nVrkAAAAASUVORK5CYIJgl2Be",
+                "origin": [
+                    171,
+                    121
+                ]
+            }
+        }
+    ]
+}

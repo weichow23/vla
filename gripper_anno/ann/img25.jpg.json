@@ -1,0 +1,29 @@
+{
+    "description": "",
+    "tags": [],
+    "size": {
+        "height": 480,
+        "width": 640
+    },
+    "objects": [
+        {
+            "id": 1640828159,
+            "classId": 13746347,
+            "objectId": null,
+            "description": "",
+            "geometryType": "bitmap",
+            "labelerLogin": "Kyrie",
+            "createdAt": "2025-02-19T06:31:51.994Z",
+            "updatedAt": "2025-02-19T06:31:51.994Z",
+            "tags": [],
+            "classTitle": "gripper",
+            "bitmap": {
+                "data": "eNoB8wEM/olQTkcNChoKAAAADUlIRFIAAAA3AAAAPAgGAAAAwhwihQAAAAFzUkdCAK7OHOkAAAGtSURBVGhD7dvhroMgDAXg+f4PzeISElSgp6VC27HfV8vHKeh09/gE/KSU0sk6otgyqPS4xdUw96Dc4BCMK5wElIHH+bG05kYwj9Qs4DRBl81kBe4tzJLkZmGm4VaBXmlLCxjV5CyCxMlZx9xh3XtLT5haSz5wnkHV5KKAmm0ZDZhvTn73lhtn6Q6bGMsluWjphcWVXwYu3+cirL3/xEVYe83kVuLOQWksiy5uFTAPahS4cbOv2eWMS9O7PxNqPtqTFpBOyt/gpOseTk5aQJJc7RGjpHPc4CSTy8JJCmglJ6ntCscFsnHcAprJcWubw1HvK9CNpXYe6BUWWkA7NU5yYhynCBe4PLnwuLeAVHJo3aG2RItotyVadxiHFuIAzSSnjUNgaE1zyWnhWueBrnP3NtO67m0c8C5DNTl0HVAbC5ocVW/jqJnWXHuc1HrJ9c4j2lAycmRj0cBR5xjCUWuh1wnUwJAuoc7hFkfBzslZgkMG1ksOPX4YJ2lNdHA1IOdYVzjubq6C46bHmX0uqPz76bhZMJUNpZwp5Lq3cSO9WByr1pa18VT/S2PiL+K/qDhoPDTty/EAAAAASUVORK5CYILzeuu7",
+                "origin": [
+                    237,
+                    174
+                ]
+            }
+        }
+    ]
+}
