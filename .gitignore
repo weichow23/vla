@@ -3,3 +3,6 @@ __pycache__
 *.pyc
 
 !gripper_classifier.pth
+
+ann/
+ann_ext/

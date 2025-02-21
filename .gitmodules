@@ -4,3 +4,6 @@
 [submodule "third_party/sam2"]
 	path = third_party/sam2
 	url = https://github.com/facebookresearch/sam2
+[submodule "third_party/rlds_dataset_mod"]
+	path = third_party/rlds_dataset_mod
+	url = https://github.com/moojink/rlds_dataset_mod

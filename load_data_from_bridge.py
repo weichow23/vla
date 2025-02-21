@@ -162,7 +162,7 @@ if not os.path.exists('bridge_demo_set'):
 breakpoint()
 
 for episode, len in episodes_metadata.items():
-    episode_data = load_all_data(os.path.join(data_path, f'{episode}.h5'), keys=['dyn_masks', 'rgb'])
+    episode_data = load_all_data(os.path.join(data_path, f'{episode}.h5'), keys=['dyn_masks', 'rgb'], BGR2RGB=False)
     mid_frame = len // 2
     fore_mask = episode_data['dyn_masks']['image_0'][mid_frame] # 64x64
     img = episode_data['rgb']['image_0'][mid_frame] # 256x256x3

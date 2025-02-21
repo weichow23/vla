@@ -6,13 +6,14 @@ import io
 import numpy as np
 import os
 
-json_path = "gripper_anno/ann"
-mask_save_path = "gripper_anno/masks"
-ori_img_path = "gripper_anno/more_data"
-img_ext = ".png"
+json_path = "gripper_anno/ann_ext"
+mask_save_path = "data/images/masks_all"
+ori_img_path = "data/images_ext"
+tgt_img_path = "data/images"
+img_ext = ".jpg"
 
 json_files = os.listdir(json_path)
-json_files = [f for f in json_files if f.endswith(".json") and "numpy" in f]
+json_files = [f for f in json_files if f.endswith(".json")]
 
 ori_img_files = os.listdir(ori_img_path)
 ori_img_files = [f for f in ori_img_files if f.endswith(img_ext)]
@@ -36,6 +37,7 @@ for json_file in json_files:
     image_data = zlib.decompress(compressed_data)
 
     # Load the bitmap
+    breakpoint()
     bitmap_image = Image.open(io.BytesIO(image_data)).convert("L")
 
     # Create a white image with the full size
@@ -54,6 +56,7 @@ for json_file in json_files:
     ori_img = np.array(ori_img)
     mask = np.array(mask)
     alpha_channel = np.where(mask > 0, 255, 0).astype(np.uint8)
+    ori_img[..., :3] = ori_img[..., :3] * (alpha_channel[..., None] // 255)
 
     # Apply the mask to the original image
     result_array = np.zeros_like(ori_img)
@@ -63,4 +66,6 @@ for json_file in json_files:
     # Convert back to image and save
     result_image = Image.fromarray(result_array)
     result_image.save(f"{mask_save_path}/{json_file.replace(f'{img_ext}.json', '.png')}", "PNG")
+
+    os.system(f"cp {ori_img_path}/{json_file.replace(f'{img_ext}.json', img_ext)} {tgt_img_path}/{json_file.replace(f'{img_ext}.json', img_ext)}")
 
