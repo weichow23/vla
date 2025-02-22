@@ -12,39 +12,59 @@ class GripperClassifier(nn.Module):
         super().__init__()
         self.fc1 = nn.Linear(in_dim, hidden_dim)
         self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(hidden_dim, 1)  # Binary classification
-        self.sigmoid = nn.Sigmoid()  # To get probabilities
+        self.fc2 = nn.Linear(hidden_dim, 2)  # Binary classification
         self.output_shape = output_shape
 
     def forward(self, x):
+        """
+        expected input shape: [..., 768]
+        """
+        if x.shape[1] == 768:
+            x = x.permute(0, 2, 3, 1)
         x = self.fc1(x)
         x = self.relu(x)
         x = self.fc2(x)
-        return self.sigmoid(x)
+        if self.output_shape is not None:
+            x = F.interpolate(
+                x, size=self.output_shape, mode="bilinear", align_corners=False
+            )
+        return torch.sigmoid(x)
+        # if self.training:
+        #     return x
+        # else:
+        #     return x.argmax(dim=1)
 
 class BNHead(nn.Module):
-    def __init__(self, num_channels=768, num_classes=2, output_shape=None):
+    def __init__(self, num_channels=768, num_classes=1, output_shape=None, upsample_factor=2):
         super().__init__()
         self.num_channels = num_channels
-        self.bn = nn.SyncBatchNorm(num_channels)
+        self.bn = nn.BatchNorm2d(num_channels) # SyncBatchNorm
         self.output_shape = output_shape
-        self.relu = nn.ReLU()
-        self.conv_seg = nn.Conv2d(num_channels, num_classes, kernel_size=1)
+        # self.relu = nn.ReLU()
+        self.upsample = nn.ConvTranspose2d(
+            in_channels=num_channels, out_channels=num_channels//2, 
+            kernel_size=4, stride=upsample_factor, padding=1, bias=False
+        )
+        self.conv_seg = nn.Conv2d(num_channels//2, num_classes, kernel_size=1)
+
 
     @torch.autocast("cuda", dtype=torch.float16, enabled=True)
     def forward(self, inputs):
         inputs = self.bn(inputs)
-        inputs = self.relu(inputs)
+        inputs = self.upsample(inputs)
+        # inputs = self.relu(inputs)
         outputs = self.conv_seg(inputs)
-        if self.output_shape is not None:
+        if self.output_shape is not None and self.output_shape != outputs.shape[-2:]:
             outputs = F.interpolate(
                 outputs, size=self.output_shape, mode="bilinear", align_corners=False
             )
-        if self.training:
-            return outputs  # shape [B, 2, H, W]
-        else:
-            # shape [B, H, W] with values in {0,1}
-            return outputs.argmax(dim=1)
+        return torch.sigmoid(outputs)
+
+        # if self.training:
+        #     return outputs  # shape [B, 2, H, W]
+        # else:
+        #     # shape [B, H, W] with values in {0,1}
+        #     return outputs.argmax(dim=1)
 
 class DinoV2Dataset(Dataset):
     def __init__(self, feats_paths, labels_paths):

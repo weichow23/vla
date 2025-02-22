@@ -21,3 +21,4 @@ pip install timm
 pip install imageio
 pip install imageio[ffmpeg]
 pip install scipy
+pip install wandb

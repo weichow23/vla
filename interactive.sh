@@ -1,8 +1,8 @@
-srun --account nvr_av_foundations \
+srun --account nvr_av_end2endav \
     --partition interactive,polar,grizzly -t 03:59:00 \
     --cpus-per-task=160 \
     --exclusive \
-    -J data \
+    -J debug \
     --container-image="/lustre/fsw/portfolios/nvr/users/yuewang/workspace/dockers/pytorch:24.01-py3.sqsh" \
     --container-mounts=/lustre/:/lustre/ \
     --nodes=1 --ntasks-per-node=1 --gres=gpu:8 \

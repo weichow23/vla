@@ -3,8 +3,12 @@ import cv2
 from scipy.ndimage import label, center_of_mass
 from scipy.interpolate import interp1d
 from PIL import Image
-def preprocess_mask(mask, min_size=30):
-    """Remove small holes and filter out small connected components."""
+def preprocess_mask(mask, min_size=50):
+    """Remove small holes and filter out small connected components.
+    min_size: minimum size of connected components to keep, w.r.t. a 256x256 image.
+    """
+    min_size = min_size * (mask.shape[-1] * mask.shape[-2]) // 256**2
+    large_size_threshold = 4 * min_size
     # Close small holes
     mask = cv2.morphologyEx(mask.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((3,3), np.uint8))
     
@@ -15,8 +19,15 @@ def preprocess_mask(mask, min_size=30):
     # Label connected components
     labeled_mask, num_features = label(mask)
     sizes = np.bincount(labeled_mask.ravel())
+
+    if np.any(sizes[1:] >= large_size_threshold):  # Ignore background (index 0)
+        min_size = sizes[1:].max() // 3  # Increase min_size threshold
+
+    if (sizes[1:]>2*min_size).sum() >= 2: # if there are more than 2 large objects, keep only the 2 largest
+        min_size = np.sort(sizes[1:])[-2]
+
     mask_filtered = np.zeros_like(mask)
-    
+
     for i in range(1, num_features + 1):
         if sizes[i] >= min_size:
             mask_filtered[labeled_mask == i] = 1
@@ -35,8 +46,11 @@ def get_centroid(mask, mode='bbox'): # choose between 'bbox' and 'mass'
     elif mode == 'mass':
         return center_of_mass(mask)
 
-def compute_trajectory(masks, max_dist=30):
-    """Compute a single, consistent trajectory from a sequence of binary masks."""
+def compute_trajectory(masks, max_dist=40):
+    """Compute a single, consistent trajectory from a sequence of binary masks.
+    max_dist: maximum distance between consecutive frames to be considered as valid. w.r.t. a 256x256 image.
+    """
+    max_dist = max_dist * masks.shape[-1] // 256
     centers = []
     modified_masks = []
     for mask in masks:
@@ -62,5 +76,5 @@ def compute_trajectory(masks, max_dist=30):
         interp_y = interp1d(valid_idx, centers[valid_idx, 1], kind='linear', fill_value='extrapolate')
         centers[invalid_idx, 0] = interp_x(invalid_idx)
         centers[invalid_idx, 1] = interp_y(invalid_idx)
-    
+
     return centers, np.stack(modified_masks, axis=0)

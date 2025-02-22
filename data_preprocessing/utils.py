@@ -6,8 +6,9 @@ import cv2
 from PIL import Image
 import imageio
 import torch
+import math
 
-def save_video_with_overlay(images, classifier_output, ee_traj, save_path, fps=10):
+def save_video_with_overlay(images, classifier_output, ee_traj, save_path, reproj_traj=None, inliers=None, fps=10, idx=None):
     """
     Creates and saves a video with overlaid masks.
 
@@ -49,11 +50,95 @@ def save_video_with_overlay(images, classifier_output, ee_traj, save_path, fps=1
             x, y = map(int, ee_traj[i])
             cv2.circle(blended, (x, y), 5, (0, 255, 0), -1)  # Green dot for trajectory
 
+        if reproj_traj is not None and i < len(reproj_traj) and reproj_traj[i] is not None:
+            # resize the trajectory to the image size
+            reproj_traj[i] = (int(reproj_traj[i][0] * image.shape[1] / ori_size[1]), int(reproj_traj[i][1] * image.shape[0] / ori_size[0]))
+            x, y = map(int, reproj_traj[i])
+            cv2.circle(blended, (x, y), 5, (255, 0, 0), -1)
+
+        if inliers is not None and i not in inliers:
+            error = np.linalg.norm(ee_traj[i] - reproj_traj[i])
+            cv2.putText(blended, f"outlier:{error:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
+        # Add frame index
+        if idx is not None:
+            cv2.putText(blended, f"{idx}:{i}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+
         # Write frame to video
         writer.append_data(blended)
 
     writer.close()
-    print(f"Saved video to {save_path}")
+
+def concat_videos_grid(video_paths, output_path, fps=None):
+    """
+    Concatenates multiple videos into a single grid video, looping them in reverse if they end earlier.
+
+    Args:
+        video_paths (list of str): List of paths to input videos.
+        output_path (str): Path to save the concatenated video.
+        fps (int, optional): Frames per second. If None, uses the FPS of the first video.
+    """
+    # Open video captures
+    caps = [cv2.VideoCapture(path) for path in video_paths]
+
+    if any(not cap.isOpened() for cap in caps):
+        raise ValueError("One or more video files could not be opened.")
+
+    # Get frame properties from the first video
+    frame_width = int(caps[0].get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(caps[0].get(cv2.CAP_PROP_FRAME_HEIGHT))
+    original_fps = caps[0].get(cv2.CAP_PROP_FPS)
+    fps = fps or int(original_fps or 10)  # Default to first video's FPS or 10 if unknown
+
+    # Determine optimal grid size (rows × cols)
+    num_videos = len(video_paths)
+    grid_cols = math.ceil(math.sqrt(num_videos))
+    grid_rows = math.ceil(num_videos / grid_cols)  # Ensure all videos fit
+
+    # Initialize video writer
+    writer = imageio.get_writer(output_path, fps=fps, codec='libx264', format='mp4')
+
+    # Store frames for reversing when videos end
+    stored_frames = [[] for _ in caps]
+    active_flags = [True] * num_videos  # Track if a video is still reading forward
+
+    while any(active_flags):
+        frames = []
+        for i, cap in enumerate(caps):
+            if active_flags[i]:  # If video is still playing forward
+                ret, frame = cap.read()
+                if ret:
+                    stored_frames[i].append(frame)  # Store frame for later reverse playback
+                else:
+                    active_flags[i] = False  # Mark as finished
+                    stored_frames[i].reverse()  # Reverse stored frames for looping
+
+            # Get the current frame (either from video or reversed frames)
+            if not active_flags[i] and stored_frames[i]:  # Play stored frames in reverse
+                frame = stored_frames[i].pop()
+            elif not active_flags[i]:  # If no stored frames left, keep the last frame
+                frame = stored_frames[i][-1] if stored_frames[i] else np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
+            
+            frames.append(frame)
+
+        # Fill missing slots with last available frames to complete the grid
+        while len(frames) < grid_rows * grid_cols:
+            frames.append(np.zeros((frame_height, frame_width, 3), dtype=np.uint8))
+
+        # Arrange frames into a grid
+        grid_frames = [frames[i:i + grid_cols] for i in range(0, len(frames), grid_cols)]
+        grid_image = np.vstack([np.hstack(row) for row in grid_frames])
+
+        # Write frame
+        writer.append_data(cv2.cvtColor(grid_image, cv2.COLOR_BGR2RGB))
+
+    # Release resources
+    for cap in caps:
+        cap.release()
+    writer.close()
+
+    print(f"Saved concatenated video to {output_path}")
+
 
 @contextmanager
 def retry_h5py_file(file_path, mode='a', retries=2, delay=1, verbose=True):
