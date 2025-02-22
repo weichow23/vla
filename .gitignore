@@ -2,7 +2,8 @@
 __pycache__/
 *.pyc
 
-!gripper_classifier.pth
+!gripper_classifier_large_conv_v2_aug.pth
+!gripper_classifier_large_conv_v2.pth
 
 ann/
 ann_ext/
