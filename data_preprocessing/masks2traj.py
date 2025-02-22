@@ -72,8 +72,8 @@ def compute_trajectory(masks, max_dist=40):
     invalid_idx = np.where(np.isnan(centers[:, 0]))[0]
     
     if len(invalid_idx) > 0 and len(valid_idx) > 1:
-        interp_x = interp1d(valid_idx, centers[valid_idx, 0], kind='linear', fill_value='extrapolate')
-        interp_y = interp1d(valid_idx, centers[valid_idx, 1], kind='linear', fill_value='extrapolate')
+        interp_x = interp1d(valid_idx, centers[valid_idx, 0], kind='linear', bounds_error=False, fill_value=np.nan)
+        interp_y = interp1d(valid_idx, centers[valid_idx, 1], kind='linear', bounds_error=False, fill_value=np.nan)
         centers[invalid_idx, 0] = interp_x(invalid_idx)
         centers[invalid_idx, 1] = interp_y(invalid_idx)
 

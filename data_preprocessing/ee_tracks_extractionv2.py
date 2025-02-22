@@ -45,7 +45,7 @@ def get_args_parser():
     parser.add_argument("--classifier_model", type=str, default="data_preprocessing/classifier_ckpt/gripper_classifier_large_conv_v2_aug.pth")
     parser.add_argument("--meta_path", type=str, default="data_preprocessing/meta_data/")
     parser.add_argument("--visualize", action="store_true")
-    parser.add_argument("--vis_path", type=str, default="vis_large_relu/")
+    parser.add_argument("--vis_path", type=str, default="vis/")
     parser.add_argument("--num_gpus", type=int, default=torch.cuda.device_count(), help="Number of GPUs to use")
     return parser
 
@@ -161,7 +161,7 @@ def get_cam_pose(ee_2d_traj, ee_3d_traj, cam_intrinsics):
         useExtrinsicGuess=True,
         flags=cv2.SOLVEPNP_ITERATIVE,      # or cv2.SOLVEPNP_P3P, cv2.SOLVEPNP_AP3P, cv2.SOLVEPNP_EPNP, etc.
         iterationsCount=1000,          # RANSAC iterations
-        reprojectionError=20.0,        # RANSAC reprojection threshold (pixels)
+        reprojectionError=40.0,        # RANSAC reprojection threshold (pixels) NOTE may need to adjust this
         confidence=0.999               # RANSAC confidence
     )
     ori_inliers = valid_idx[inliers]

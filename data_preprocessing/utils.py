@@ -43,22 +43,24 @@ def save_video_with_overlay(images, classifier_output, ee_traj, save_path, repro
         # Blend overlay with image
         blended = (0.7 * image + 0.3 * overlay).astype(np.uint8)
 
+        if inliers is not None and i not in inliers and \
+            (reproj_traj is not None and i < len(reproj_traj) and reproj_traj[i] is not None) and \
+            (ee_traj is not None and i < len(ee_traj) and ee_traj[i] is not None):
+            error = np.linalg.norm(ee_traj[i] - reproj_traj[i])
+            cv2.putText(blended, f"outlier:{error:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
         # Draw trajectory
-        if i < len(ee_traj) and ee_traj[i] is not None:
+        if i < len(ee_traj) and ~np.isnan(ee_traj[i, 0]):
             # resize the trajectory to the image size
             ee_traj[i] = (int(ee_traj[i][0] * image.shape[1] / ori_size[1]), int(ee_traj[i][1] * image.shape[0] / ori_size[0]))
             x, y = map(int, ee_traj[i])
             cv2.circle(blended, (x, y), 5, (0, 255, 0), -1)  # Green dot for trajectory
 
-        if reproj_traj is not None and i < len(reproj_traj) and reproj_traj[i] is not None:
+        if reproj_traj is not None and i < len(reproj_traj) and ~np.isnan(reproj_traj[i, 0]):
             # resize the trajectory to the image size
             reproj_traj[i] = (int(reproj_traj[i][0] * image.shape[1] / ori_size[1]), int(reproj_traj[i][1] * image.shape[0] / ori_size[0]))
             x, y = map(int, reproj_traj[i])
             cv2.circle(blended, (x, y), 5, (255, 0, 0), -1)
-
-        if inliers is not None and i not in inliers:
-            error = np.linalg.norm(ee_traj[i] - reproj_traj[i])
-            cv2.putText(blended, f"outlier:{error:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
         # Add frame index
         if idx is not None:
