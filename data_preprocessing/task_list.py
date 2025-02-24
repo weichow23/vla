@@ -42,8 +42,8 @@ def get_unique_dicts(jsonl_file):
 
 # Example usage
 if __name__ == "__main__":
-    jsonl_list = os.listdir("data_preprocessing/meta_data/val/")
-    jsonl_list = [f"data_preprocessing/meta_data/val/{f}" for f in jsonl_list if f.endswith(".jsonl")]
+    jsonl_list = os.listdir("data_preprocessing/meta_data/train/")
+    jsonl_list = [f"data_preprocessing/meta_data/train/{f}" for f in jsonl_list if f.endswith(".jsonl")]
     processed_episodes = []
 
     for jsonl_file in jsonl_list:
@@ -58,8 +58,8 @@ if __name__ == "__main__":
     print(f"adding {len(unique_processed_episodes)} to progress_dict.json")
 
     progress_dict = {}
-    if os.path.exists("data_preprocessing/meta_data/val/progress_dict.json"):
-        with open("data_preprocessing/meta_data/val/progress_dict.json", "r") as f:
+    if os.path.exists("data_preprocessing/meta_data/train/progress_dict.json"):
+        with open("data_preprocessing/meta_data/train/progress_dict.json", "r") as f:
             progress_dict = json.load(f)
     print(f"Current progress_dict length: {len(progress_dict)}")
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         if key not in progress_dict:
             progress_dict[key] = value
 
-    with open("data_preprocessing/meta_data/val/progress_dict.json", "w") as f:
+    with open("data_preprocessing/meta_data/train/progress_dict.json", "w") as f:
         json.dump(progress_dict, f, indent=4)
 
     print(f"Updated progress_dict length: {len(progress_dict)}")

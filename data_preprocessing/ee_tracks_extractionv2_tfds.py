@@ -52,7 +52,7 @@ class RLDSDataset(IterableDataset):
         with tf.device('/CPU:0'):
             builder = tfds.builder(dataset_name, data_dir=self.data_path)
             dataset = dl.DLataset.from_rlds(builder, split=trainval, shuffle=False, num_parallel_reads=tf.data.AUTOTUNE)
-            dataset = dataset.ignore_errors()
+            # dataset = dataset.ignore_errors()
         self.dataset = dataset.with_ram_budget(1)
         self.base_transform = base_transform
         self.progress = progress
