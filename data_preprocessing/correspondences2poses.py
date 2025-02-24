@@ -155,28 +155,29 @@ def estimate_camera_parameters(
 
     return camera_matrix, dist_coeffs, R, tvec
 
-def euler_to_rotmat(euler):
+def euler_to_rotation_matrix(euler_angles):
     """
-    Convert Euler angles (rx, ry, rz) in radians to a 3x3 rotation matrix.
-    We assume the convention Rz(rz) * Ry(ry) * Rx(rx), but you might need
-    to adjust this based on how your Euler angles are defined.
+    Convert Euler angles (roll, pitch, yaw) to a rotation matrix.
+    The angles are assumed to be in radians.
+    Note: This implementation uses the convention R = Rz @ Ry @ Rx.
+    Adjust the order if your Euler angles follow a different convention.
     """
-    rx, ry, rz = euler  # roll, pitch, yaw
-    
+    roll, pitch, yaw = euler_angles
+
     # Rotation about x-axis (roll)
-    Rx = np.array([[1,          0,           0],
-                   [0, np.cos(rx), -np.sin(rx)],
-                   [0, np.sin(rx),  np.cos(rx)]])
+    Rx = np.array([[1, 0, 0],
+                   [0, np.cos(roll), -np.sin(roll)],
+                   [0, np.sin(roll),  np.cos(roll)]])
     
     # Rotation about y-axis (pitch)
-    Ry = np.array([[ np.cos(ry), 0, np.sin(ry)],
-                   [           0, 1,          0],
-                   [-np.sin(ry), 0, np.cos(ry)]])
+    Ry = np.array([[ np.cos(pitch), 0, np.sin(pitch)],
+                   [0, 1, 0],
+                   [-np.sin(pitch), 0, np.cos(pitch)]])
     
     # Rotation about z-axis (yaw)
-    Rz = np.array([[np.cos(rz), -np.sin(rz), 0],
-                   [np.sin(rz),  np.cos(rz), 0],
-                   [         0,           0, 1]])
+    Rz = np.array([[np.cos(yaw), -np.sin(yaw), 0],
+                   [np.sin(yaw),  np.cos(yaw), 0],
+                   [0, 0, 1]])
     
     # Combined rotation matrix
     R = Rz @ Ry @ Rx

@@ -7,3 +7,6 @@
 [submodule "third_party/rlds_dataset_mod"]
 	path = third_party/rlds_dataset_mod
 	url = https://github.com/moojink/rlds_dataset_mod
+[submodule "third_party/cameraviewer"]
+	path = third_party/cameraviewer
+	url = https://github.com/xt4d/CameraViewer

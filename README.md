@@ -22,3 +22,5 @@ pip install imageio
 pip install imageio[ffmpeg]
 pip install scipy
 pip install wandb
+pip install --no-deps --force-reinstall git+https://github.com/moojink/dlimp_openvla
+pip install plotly

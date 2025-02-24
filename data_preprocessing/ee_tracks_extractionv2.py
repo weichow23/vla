@@ -11,7 +11,6 @@ import sys
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(script_dir, '..')))
 import argparse
-import tensorflow_datasets as tfds
 from tqdm import tqdm
 from PIL import Image
 import numpy as np
@@ -22,7 +21,7 @@ import torch
 from gripper_classifier import GripperClassifier, BNHead
 from data_preprocessing.utils import load_all_data, save_video_with_overlay, concat_videos_grid
 from data_preprocessing.masks2traj import compute_trajectory
-from data_preprocessing.correspondences2poses import intrinsics_resize, euler_to_rotmat
+from data_preprocessing.correspondences2poses import intrinsics_resize
 import gc
 import json
 import time
@@ -34,8 +33,10 @@ from huggingface_hub import hf_hub_download
 
 def get_args_parser():
     parser = argparse.ArgumentParser("Parallel End-effector tracking")
-    parser.add_argument("--data_path", type=str, default='/lustre/fsw/portfolios/nvr/projects/nvr_av_foundations/STORRM/bridge_preprocessed/')
-    parser.add_argument("--trainval", type=str, default='val')
+    parser.add_argument("--dataset_name", type=str, default="bridge_orig")
+    parser.add_argument("--trainval", type=str, default="val")
+    parser.add_argument("--data_path", type=str, default='/lustre/fsw/portfolios/nvr/projects/nvr_av_foundations/STORRM/bridge_preprocessed')
+    parser.add_argument("--mul_cam", action="store_true", help="Calibrate all cameras we have in the dataset")
     parser.add_argument("--DINO_model", type=str, default="vit_large_patch14_dinov2.lvd142m")
     parser.add_argument("--stride", type=int, default=14)
     parser.add_argument("--patch_size", type=int, default=14)
@@ -47,6 +48,7 @@ def get_args_parser():
     parser.add_argument("--visualize", action="store_true")
     parser.add_argument("--vis_path", type=str, default="vis/")
     parser.add_argument("--num_gpus", type=int, default=torch.cuda.device_count(), help="Number of GPUs to use")
+    parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID to use")
     return parser
 
 def init_DINO_model(model_identifier, stride, img_size, patch_size, device):
@@ -148,9 +150,8 @@ def get_cam_pose(ee_2d_traj, ee_3d_traj, cam_intrinsics):
     ee_2d_traj = ee_2d_traj[valid_idx]
     ee_3d_traj = ee_3d_traj[valid_idx]
 
-    # success, rvec, tvec = cv2.solvePnP(
-    #     ee_3d_traj, ee_2d_traj, cam_intrinsics, 
-    #     None, flags=cv2.SOLVEPNP_ITERATIVE)
+    if len(ee_2d_traj) <= 4:
+        return None
     success, rvec, tvec, inliers = cv2.solvePnPRansac(
         ee_3d_traj,       # 3D points in the object’s coordinate space
         ee_2d_traj,        # Corresponding 2D projections in the image
@@ -175,15 +176,27 @@ def get_cam_pose(ee_2d_traj, ee_3d_traj, cam_intrinsics):
         tvec
     )
 
+    ## let's also log the reprojection error 
+    projected_points, _ = cv2.projectPoints(
+        ee_3d_traj[inliers],  # Inlier 3D points
+        rvec, 
+        tvec, 
+        cam_intrinsics, 
+        None
+    )
+
+    # Compute the reprojection error
+    errors = np.linalg.norm(ee_2d_traj[inliers] - projected_points.squeeze(), axis=1)
+    mean_error = np.mean(errors)
+
     if not success:
         return None
     # rmat, _ = cv2.Rodrigues(rvec)
     # P = np.hstack((rmat, tvec))
-    return (rvec.astype(np.float32), tvec.astype(np.float32), ori_inliers)
+    return (rvec.astype(np.float32), tvec.astype(np.float32), ori_inliers), (len(valid_idx), len(inliers), mean_error)
 
 def main(args):
     np.random.seed(111)
-    # b_tfds = tfds.builder('bridge_dataset', data_dir=args.data_path)
     # ds = b_tfds.as_dataset(split=f"{args.trainval}[:1]")
     args.feat_dim = 768 if "base" in args.DINO_model else 1024
     episodes_metadata = json.load(open(os.path.join(args.data_path, 'samples_all_val_filtered.json')))
@@ -214,101 +227,93 @@ def main(args):
     total_time = 0
 
     episode_list = list(episodes_metadata.keys())
-    episode_list = np.random.permutation(episode_list)[:144]
+    episode_list = np.random.permutation(episode_list)[:64]
 
     estimated_episode_metadata = {}
 
     for idx, episode in tqdm(enumerate(episode_list)):
         start= time.time()
         epi_path = os.path.join(args.data_path, f"{episode}.h5")
-        epi_data = load_all_data(epi_path, keys=['rgb', 'action'], cameras=['image_0'], BGR2RGB=False)
-        ori_images = epi_data['rgb']['image_0']
-        ee_3d_poses = epi_data['action'][:, 0, :3].astype(np.float32)
-        ee_euler = epi_data['action'][:, 0, 3:6].astype(np.float32)
+        epi_data = load_all_data(epi_path, keys=['rgb', 'action'], BGR2RGB=False)
+        ee_6d_poses = epi_data['action'][:, 0, :6].astype(np.float32)
 
-        images = [Image.fromarray(img).convert("RGB") for img in ori_images]
-        images = [base_transform(img) for img in images]
-        batched_images = torch.stack(images).to(device)
-        data_time = time.time() - start
-        total_data_time += data_time
+        for cam in epi_data['rgb'].keys():
+            ori_images = epi_data['rgb'][cam]
+            images = [Image.fromarray(img).convert("RGB") for img in ori_images]
+            images = [base_transform(img) for img in images]
+            batched_images = torch.stack(images).to(device)
+            data_time = time.time() - start
+            total_data_time += data_time
 
-        model_start = time.time()
-        gripper_masks = get_gripper_masks(model, classifier, batched_images, args.batch_size, feat_dim=args.feat_dim, feat_size=args.img_size//args.stride)
-        ee_traj, modified_masks = compute_trajectory(gripper_masks.cpu().numpy())
-        model_time = time.time() - model_start
-        total_model_time += model_time
+            model_start = time.time()
+            gripper_masks = get_gripper_masks(model, classifier, batched_images, args.batch_size, feat_dim=args.feat_dim, feat_size=args.img_size//args.stride)
+            ee_traj, modified_masks = compute_trajectory(gripper_masks.cpu().numpy())
+            model_time = time.time() - model_start
+            total_model_time += model_time
 
-        if np.isnan(ee_traj).all():
-            print(f"Episode: {episode} has no valid trajectory.")
-            estimated_episode_metadata[episode] = "No valid trajectory"
-            continue
-        
-        solver_start = time.time()
-        result = get_cam_pose(ee_traj, ee_3d_poses, cam_intrinsics)
-        solver_time = time.time() - solver_start
-        total_solver_time += solver_time
+            if np.isnan(ee_traj).all():
+                print(f"Episode: {episode}/{cam} has no valid trajectory.")
+                estimated_episode_metadata[episode] = "No valid trajectory"
+                # continue
+            else:
+                solver_start = time.time()
+                result, log = get_cam_pose(ee_traj, ee_6d_poses[..., :3], cam_intrinsics)
+                solver_time = time.time() - solver_start
+                total_solver_time += solver_time
 
-        if result is None:
-            print(f"Episode: {episode} has no valid camera pose.")
-            estimated_episode_metadata[episode] = "No valid camera pose"
-            continue
+            if result is None:
+                print(f"Episode: {episode}/{cam} has no valid camera pose.")
+                estimated_episode_metadata[episode] = "No valid camera pose"
+                # continue
+            else:
+                estimated_episode_metadata[episode] = {
+                    "r": result[0].tolist(),
+                    "t": result[1].tolist(),
+                    "num_waypoints": log[0], # number of waypoints, might be less than len(images) due to undetected grippers
+                    "num_inliers": log[1],
+                    "mean_proj_error": log[2]
+                }
 
-        estimated_episode_metadata[episode] = {
-            "r": result[0].tolist(),
-            "t": result[1].tolist()
-        }
+            # model_time = time.time() - model_start
 
-        # model_time = time.time() - model_start
+            # total_model_time += model_time
+            # total_time += time.time() - start
+            # print(f"Episode: {episode}, Length: {len(images)}, Time: {time.time() - start}, Model time: {model_time}")
 
-        # total_model_time += model_time
-        # total_time += time.time() - start
-        # print(f"Episode: {episode}, Length: {len(images)}, Time: {time.time() - start}, Model time: {model_time}")
+            if args.visualize:
+                temp_path = f"{args.vis_path}/temp/"
+                if not os.path.exists(temp_path):
+                    os.makedirs(temp_path)
+                save_path = os.path.join(temp_path, f"{episode.replace('/', '_')}_{cam}.mp4")
+                # save_video_with_overlay(
+                #     ori_images,
+                #     gripper_masks,
+                #     ee_traj.copy(),
+                #     fps=5,
+                #     save_path=save_path
+                # )
+                save_video_with_overlay(
+                    ori_images,
+                    modified_masks,
+                    ee_traj.copy(),
+                    ee_6d_traj=ee_6d_poses,
+                    cam_params=(cam_intrinsics, result[0], result[1]),
+                    inliers=result[2],
+                    fps=5,
+                    save_path=save_path,
+                    idx=idx
+                )
 
-        if args.visualize:
-            temp_path = f"{args.vis_path}/temp/"
-            if not os.path.exists(temp_path):
-                os.makedirs(temp_path)
-            save_path = os.path.join(temp_path, f"{episode.replace('/', '_')}.mp4")
-            # save_video_with_overlay(
-            #     ori_images,
-            #     gripper_masks,
-            #     ee_traj.copy(),
-            #     fps=5,
-            #     save_path=save_path
-            # )
-            reproj_traj, _ = cv2.projectPoints(ee_3d_poses,
-                                               result[0], result[1], 
-                                               cam_intrinsics, None)
-            reproj_traj = reproj_traj.squeeze()
+            del batched_images, gripper_masks, ee_traj, modified_masks
+            torch.cuda.empty_cache()
+            gc.collect()
 
-            ## project the axis
-            axis_length = 0.1
-            local_points = np.float32([
-                [0, 0, 0],                      # origin
-                [axis_length, 0, 0],            # x-axis
-                [0, axis_length, 0],            # y-axis
-                [0, 0, axis_length]             # z-axis
-            ])
-            ## project the axis
-
-            save_video_with_overlay(
-                ori_images,
-                modified_masks,
-                ee_traj.copy(),
-                reproj_traj=reproj_traj,
-                inliers=result[2],
-                fps=5,
-                save_path=save_path.replace('.mp4', '_filtered.mp4'),
-                idx=idx
-            )
-
-        del batched_images, gripper_masks, ee_traj, modified_masks
-        torch.cuda.empty_cache()
-        gc.collect()
+            if not args.mul_cam:
+                break
 
     if args.visualize:
         videos = os.listdir(temp_path)
-        videos = [os.path.join(temp_path, v) for v in videos if 'filtered' in v]
+        videos = [os.path.join(temp_path, v) for v in videos]
         concat_videos_grid(videos, f"{args.vis_path}/all_videos.mp4")
         os.system(f"rm -rf {temp_path}")
 

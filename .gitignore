@@ -11,3 +11,5 @@ vis*/
 wandb/
 augmented_images/
 */features/
+
+*.html

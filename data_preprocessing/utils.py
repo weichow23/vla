@@ -7,8 +7,87 @@ from PIL import Image
 import imageio
 import torch
 import math
+from data_preprocessing.correspondences2poses import euler_to_rotation_matrix
 
-def save_video_with_overlay(images, classifier_output, ee_traj, save_path, reproj_traj=None, inliers=None, fps=10, idx=None):
+def add_data_hdf5(raw_estimated_data, dataset_path):
+    unique_id = next(iter(raw_estimated_data.keys()))
+    cam = next(iter(raw_estimated_data[unique_id].keys()))
+    with h5py.File(dataset_path, "a") as f:
+        group_path = f"{unique_id}/{cam}"
+
+        if group_path not in f:
+            grp = f.create_group(group_path)
+
+            raw_data = raw_estimated_data[unique_id][cam]
+
+            for key in raw_data.keys():
+                if raw_data[key] is not None:
+                    grp.create_dataset(key, 
+                        data=raw_data[key])
+
+# def add_data_hdf5(data, h5file, path=""):
+#     """Recursively saves a dictionary into an HDF5 file."""
+#     for key, value in data.items():
+#         key_path = f"{path}/{key}" if path else key  # Ensure proper hierarchy
+
+#         if isinstance(value, dict):
+#             save_dict_to_hdf5(value, h5file, key_path)  # Recursively save nested dictionaries
+#         elif isinstance(value, (np.ndarray, list)):  # Check for array-like values
+#             h5file.create_dataset(key_path, data=value, compression="gzip")  # Save dataset with compression
+#         elif value is not None:  # If it's a scalar, no compression
+#             h5file.create_dataset(key_path, data=value)  # Save scalar dataset without compression
+
+def draw_pose_axes(img, ee_6d_pose, cam_intrinsics, rvec, tvec, axis_length=0.1):
+    """
+    Draws the coordinate axes of a 6D pose on the image.
+    
+    Parameters:
+      img           : The image on which to draw.
+      ee_6d_pose   : The 6D pose of the end-effector.
+      cam_intrinsics: Camera intrinsic matrix.
+      rvec, tvec    : Camera extrinsic parameters used for projection.
+      axis_length   : Length of each axis (in the same units as pose_3d).
+    """
+    # Compute the rotation matrix from the Euler angles.
+    R = euler_to_rotation_matrix(ee_6d_pose[3:6])
+    
+    # Define the axes in the pose's local coordinate frame.
+    # x-axis (red), y-axis (green), z-axis (blue)
+    axis_x = np.array([axis_length, 0, 0]).reshape(3, 1)
+    axis_y = np.array([0, axis_length, 0]).reshape(3, 1)
+    axis_z = np.array([0, 0, axis_length]).reshape(3, 1)
+    
+    # The origin of the pose
+    origin = np.array(ee_6d_pose[:3]).reshape(3, 1)
+    
+    # Rotate the axes to the world coordinate system and add the origin.
+    x_end = origin + R @ axis_x
+    y_end = origin + R @ axis_y
+    z_end = origin + R @ axis_z
+    
+    # Stack the origin and endpoints so they can be projected.
+    pts_3d = np.hstack((origin, x_end, y_end, z_end)).T.reshape(-1, 3)
+    
+    # Project the 3D points onto the image.
+    pts_2d, _ = cv2.projectPoints(pts_3d, rvec, tvec, cam_intrinsics, None)
+    pts_2d = np.squeeze(pts_2d).astype(int)
+    
+    # Define the 2D points.
+    origin_pt = tuple(pts_2d[0])
+    x_pt = tuple(pts_2d[1])
+    y_pt = tuple(pts_2d[2])
+    z_pt = tuple(pts_2d[3])
+    
+    # Draw the axes on the image.
+    cv2.line(img, origin_pt, x_pt, (0, 0, 255), 2)   # x-axis in red
+    cv2.line(img, origin_pt, y_pt, (0, 255, 0), 2)   # y-axis in green
+    cv2.line(img, origin_pt, z_pt, (255, 0, 0), 2)   # z-axis in blue
+    
+    return img, origin_pt
+
+def save_video_with_overlay(images, classifier_output, ee_traj, save_path, 
+                            ee_6d_traj=None, cam_params=None, inliers=None, 
+                            fps=10, idx=None, resolution=(256, 256)):
     """
     Creates and saves a video with overlaid masks.
 
@@ -30,6 +109,9 @@ def save_video_with_overlay(images, classifier_output, ee_traj, save_path, repro
 
     for i in range(len(images)):
         image = np.array(images[i])  # Convert to numpy (3, H, W)
+        image = Image.fromarray(image)
+        image = image.resize(ori_size)
+        image = np.array(image)
 
         # Process mask
         pred_mask = classifier_output[i]
@@ -43,10 +125,15 @@ def save_video_with_overlay(images, classifier_output, ee_traj, save_path, repro
         # Blend overlay with image
         blended = (0.7 * image + 0.3 * overlay).astype(np.uint8)
 
+        reproj_pos = None
+        if cam_params is not None \
+            and ee_6d_traj is not None and i < len(ee_6d_traj) and ee_6d_traj[i] is not None:
+            blended, reproj_pos = draw_pose_axes(blended, ee_6d_traj[i], cam_params[0], cam_params[1], cam_params[2])
+
         if inliers is not None and i not in inliers and \
-            (reproj_traj is not None and i < len(reproj_traj) and reproj_traj[i] is not None) and \
+            (reproj_pos is not None) and \
             (ee_traj is not None and i < len(ee_traj) and ee_traj[i] is not None):
-            error = np.linalg.norm(ee_traj[i] - reproj_traj[i])
+            error = np.linalg.norm(ee_traj[i] - reproj_pos)
             cv2.putText(blended, f"outlier:{error:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
         # Draw trajectory
@@ -56,22 +143,25 @@ def save_video_with_overlay(images, classifier_output, ee_traj, save_path, repro
             x, y = map(int, ee_traj[i])
             cv2.circle(blended, (x, y), 5, (0, 255, 0), -1)  # Green dot for trajectory
 
-        if reproj_traj is not None and i < len(reproj_traj) and ~np.isnan(reproj_traj[i, 0]):
+        if reproj_pos is not None:
             # resize the trajectory to the image size
-            reproj_traj[i] = (int(reproj_traj[i][0] * image.shape[1] / ori_size[1]), int(reproj_traj[i][1] * image.shape[0] / ori_size[0]))
-            x, y = map(int, reproj_traj[i])
+            reproj_pos = (int(reproj_pos[0] * image.shape[1] / ori_size[1]), int(reproj_pos[1] * image.shape[0] / ori_size[0]))
+            x, y = map(int, reproj_pos)
             cv2.circle(blended, (x, y), 5, (255, 0, 0), -1)
 
         # Add frame index
         if idx is not None:
             cv2.putText(blended, f"{idx}:{i}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
+        # resize the image to the desired resolution
+        blended = cv2.resize(blended, resolution)
+
         # Write frame to video
         writer.append_data(blended)
 
     writer.close()
 
-def concat_videos_grid(video_paths, output_path, fps=None):
+def concat_videos_grid(video_paths, output_path, fps=None, resolution=(256, 256)):
     """
     Concatenates multiple videos into a single grid video, looping them in reverse if they end earlier.
 
@@ -87,8 +177,10 @@ def concat_videos_grid(video_paths, output_path, fps=None):
         raise ValueError("One or more video files could not be opened.")
 
     # Get frame properties from the first video
-    frame_width = int(caps[0].get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(caps[0].get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # frame_width = int(caps[0].get(cv2.CAP_PROP_FRAME_WIDTH))
+    # frame_height = int(caps[0].get(cv2.CAP_PROP_FRAME_HEIGHT))
+    frame_width, frame_height = resolution  # Use desired resolution
+
     original_fps = caps[0].get(cv2.CAP_PROP_FPS)
     fps = fps or int(original_fps or 10)  # Default to first video's FPS or 10 if unknown
 
@@ -110,6 +202,7 @@ def concat_videos_grid(video_paths, output_path, fps=None):
             if active_flags[i]:  # If video is still playing forward
                 ret, frame = cap.read()
                 if ret:
+                    frame = cv2.resize(frame, (frame_width, frame_height))  # Resize frame
                     stored_frames[i].append(frame)  # Store frame for later reverse playback
                 else:
                     active_flags[i] = False  # Mark as finished
