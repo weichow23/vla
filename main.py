@@ -8,10 +8,12 @@ import functools
 from re import L
 from typing import Dict, Any
 import datetime
-
+import torch
+import os
+import wandb
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint
 from lightning.pytorch.trainer import Trainer
-from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
+from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger, WandbLogger
 from lightning.pytorch.strategies import DDPStrategy
 from lightning import seed_everything
 import torch.distributed as dist
@@ -78,6 +80,17 @@ def init_trainer_config(configs):
                 )
             elif logger == "csv":
                 loggers.append(CSVLogger(configs["log_dir"].as_posix(), name=exp_name))
+            elif logger == "wandb":
+                # export WANDB_MODE=disabled  export WANDB_MODE=online
+                if dist.get_rank() == 0:
+                    os.environ["WANDB_API_KEY"] = "694a4f88e896dab0bc5000f60be7881c201d0e98"
+                    if not wandb.run:
+                        wandb.init(project="vla-camera", entity='3210103790', name=exp_name)
+                        loggers.append(WandbLogger(log_model=True))
+                else:
+                    loggers.append(
+                        TensorBoardLogger(configs["log_dir"].as_posix(), name=exp_name)
+                    )
             else:
                 raise NotImplementedError
 
@@ -265,7 +278,7 @@ def parse_args():
 
     # Experiment
     parser.add_argument("config", type=str, help="config file used for training")
-    parser.add_argument("--gpus", default=1, type=int)
+    parser.add_argument("--gpus", default=8, type=int)
     parser.add_argument("--num_nodes", default=1, type=int)
     parser.add_argument("--seed", default=None, type=int)
     parser.add_argument("--log_dir", default=None, type=str)
@@ -335,7 +348,7 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    # import os
+    torch.backends.cudnn.enabled = False
 
     # os.environ['CUDA_LAUNCH_BLOCKING']="1"
     args = parse_args()

@@ -601,22 +601,23 @@ def get_llava_video_processor(tokenizer, video_decode_backend="decord", num_fram
 
 def get_prompt_builder(model_name, eos=None, bos=None):
     model_family = "openvla"
-    import robovlms.data.prompting
+    from robovlms.data.prompting import PhiPromptBuilder, QwenPromptBuilder, \
+            LLaMa2ChatPromptBuilder, MistralInstructPromptBuilder, VicunaV15ChatPromptBuilder
 
     if "vicuna" in model_name.lower():
-        return data.prompting.VicunaV15ChatPromptBuilder(model_family, eos=eos, bos=bos)
+        return VicunaV15ChatPromptBuilder(model_family, eos=eos, bos=bos)
     elif "mistral" in model_name.lower():
-        return data.prompting.MistralInstructPromptBuilder(
+        return MistralInstructPromptBuilder(
             model_family, eos=eos, bos=bos
         )
     elif "llama" in model_name.lower():
-        return data.prompting.LLaMa2ChatPromptBuilder(model_family, eos=eos, bos=bos)
+        return LLaMa2ChatPromptBuilder(model_family, eos=eos, bos=bos)
     elif "mpt" in model_name.lower():
-        return data.prompting.PhiPromptBuilder(model_family, eos=eos, bos=bos)
+        return PhiPromptBuilder(model_family, eos=eos, bos=bos)
     elif "qwen" in model_name.lower():
-        return data.prompting.QwenPromptBuilder(model_family, eos=eos, bos=bos)
+        return QwenPromptBuilder(model_family, eos=eos, bos=bos)
     else:
-        return data.prompting.PhiPromptBuilder(model_family, eos=eos, bos=bos)
+        return PhiPromptBuilder(model_family, eos=eos, bos=bos)
 
 
 def mu_law_companding(x, mu=255, maintain_last=True):

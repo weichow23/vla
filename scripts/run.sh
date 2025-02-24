@@ -18,7 +18,7 @@ export NCCL_IB_GID_INDEX=3
 export NCCL_SOCKET_IFNAME=eth0
 
 # setup distributed training args
-GPUS_PER_NODE=1
+GPUS_PER_NODE=8
 WORKER_NUM=1 # number of distributed workers
 
 NODE_ID=0

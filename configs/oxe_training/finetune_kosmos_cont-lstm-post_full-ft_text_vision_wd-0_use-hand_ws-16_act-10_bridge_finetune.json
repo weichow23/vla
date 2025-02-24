@@ -1,7 +1,7 @@
 {
     "robovlm_name": "RoboKosMos",
     "parent": null,
-    "task_name": "calvin_finetune",
+    "task_name": "bridge_only",
     "model": "kosmos",
     "model_url": "https://huggingface.co/microsoft/kosmos-2-patch14-224",
     "seq_len": 1,
@@ -100,7 +100,7 @@
         "accelerator": "gpu",
         "strategy": "deepspeed_stage_2",
         "precision": "16",
-        "logger": ["tensorboard"],
+        "logger": ["wandb"],
         "gradient_clip_val": 1.0,
         "use_distributed_sampler": false,
         "log_every_n_steps": 10,
@@ -112,7 +112,7 @@
     },
     "train_dataset": {
         "type": "OpenVLADataset",
-        "data_root_dir": "datasets/open-x-embodiment",
+        "data_root_dir": "/mnt/bn/magellan-product-audit/weic/data_hf/oxe",
         "model_name": "kosmos",
         "image_aug": true,
         "mode": "train",
@@ -124,7 +124,7 @@
     },
     "val_dataset": {
         "type": "OpenVLADataset",
-        "data_root_dir": "datasets/open-x-embodiment",
+        "data_root_dir": "/mnt/bn/magellan-product-audit/weic/data_hf/oxe",
         "model_name": "kosmos",
         "mode": "train",
         "data_mix": "bridge",

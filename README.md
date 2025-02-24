@@ -1,90 +1,15 @@
 
-#  | *RoboVLMs* | Towards Generalist Robot Policies: <br>What Matters in Building Vision-Language-Action Models
-
-<a href="https://arxiv.org/abs/2412.14058" target="_blank">
-    <img alt="arXiv" src="https://img.shields.io/badge/arXiv-RoboVLMs-red?logo=arxiv" height="25" />
-</a>
-<a href="https://robovlms.github.io/" target="_blank">
-    <img alt="Website" src="https://img.shields.io/badge/🌎_Website-robovlms.io-blue.svg" height="25" />
-</a>
-<a href="https://huggingface.co/robovlms/RoboVLMs" target="_blank">
-    <img alt="HF Model: RoboVLMs" src="https://img.shields.io/badge/%F0%9F%A4%97%20_Model-RoboVLMs-ffc107?color=ffc107&logoColor=white" height="25" />
-</a>
-<a href="https://huggingface.co/datasets/robovlms/bytedance_robot_benchmark_20" target="_blank">
-    <img alt="HF Dataset: BDRBench-20" src="https://img.shields.io/badge/%F0%9F%A4%97%20_Dataset-BDRBench20-ffc107?color=ffc107&logoColor=white" height="25" />
-</a>
-<br>
-<a href="https://www.python.org/" target="_blank">
-    <img alt="Python 3.8" src="https://img.shields.io/badge/Python-%3E=3.8-blue" height="25" />
-</a>
-<a href="https://pytorch.org/" target="_blank">
-    <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-%3E=2.0-orange" height="25" />
-</a>
-
-<div align="center">
-    <br>
-<div style="text-align: center;">
-    <a href="https://scholar.google.com/citations?hl=zh-CN&user=laOWyTQAAAAJ"  target="_blank">Xinghang Li</a><sup>*</sup> &emsp;
-    <a href="https://github.com/LPY1219"  target="_blank">Peiyan Li</a> &emsp;
-    <a href="https://minghuanliu.com/"  target="_blank">Minghuan Liu</a><sup>*</sup> &emsp;
-    <a href=""  target="_blank">Dong Wang</a> &emsp;
-    <a href=""  target="_blank">Jirong Liu</a> &emsp;
-    <br>
-    <a href="https://bingykang.github.io/"  target="_blank">Bingyi Kang</a> &emsp;
-    <a href="https://yusufma03.github.io/"  target="_blank">Xiao Ma</a> &emsp;
-    <a href="https://www.taokong.org/"  target="_blank">Tao Kong</a><sup>&dagger;</sup> &emsp;
-    <a href="https://zhanghanbo.github.io/"  target="_blank">Hanbo Zhang</a><sup>*</sup><sup>&dagger;</sup> &emsp;
-    <a href="https://sites.google.com/site/thuliuhuaping/home"  target="_blank">Huaping Liu</a><sup>&dagger;</sup> &emsp;
-    <br>
-    <p style="text-align: center; margin-bottom: 0;">
-        <span class="author-note"><sup>*</sup>Project lead</span>&emsp;
-        <span class="author-note"><sup>&dagger;</sup>Corresponding author</span>
-    </p>
-<br>
-<p style="text-align: center;">
-    Tsinghua University &emsp; ByteDance Research &emsp; CASIA MAIS-NLPR <br>
-    Shanghai Jiao Tong University &emsp; National University of Singapore</p>
-</div>
-</div>
-
-<hr>
-
-<p>
-    <img src="imgs/robovlms.png" alt="RoboVLMs" width="100%" height="auto">
-</p>
-
-## Updates
-- [12/11/24] 🔥 Multi-modal foundation models [blast](https://github.com/BradyFU/Awesome-Multimodal-Large-Language-Models/tree/Evaluation), but how will they help robots? We have released RoboVLMs to help the community on this! RoboVLMs is a flexible codebase that allows integrating most of VLMs within 30 lines of codes. We also release the strongest VLA model (driven by KosMos VLM backbone). See our technical report at [here](https://robovlms.github.io).
-
-## Contents
-- [Installation](#installation)
-- [VLA Benchmarks](#vla-benchmarks-comparison)
-- [VLM Integration Tutorial](#vlm-integration-tutorial)
-- [Training](#training)
-- [Evaluation](#evaluation)
-- [Supported Backbones & Architectures](#supported-backbones--vla-architectures-updating)
-- [BibTex](#bibtex)
-
-
 ## Installation
 ```bash
 # ===================================
-# If you want to run CALVIN simulation
-conda create -n robovlms python=3.8.10 -y
-
-# If you want to run SIMPLER simulation
-conda create -n robovlms python=3.10 -y
-
-# ===================================
-
-conda activate robovlms
-conda install cudatoolkit cudatoolkit-dev -y
-pip install -e .
+# torch==2.3.1在zw的服务器上会报错，cuDNN错误，自动安装的是2.1.0的，这个没问题, 如果有报错就升级一下，没报错就别管
+pip3 install -e .
+sudo apt-get install -y python3-tk libjpeg-dev libpng-dev
 
 # For training on OXE dataset, use our fork of openvla
 git clone https://github.com/lixinghang12/openvla
 cd openvla
-pip install -e .
+pip3 install -e .
 ```
 
 If you want to do evaluation (simulation) rather than only training on offline data, we suggest you to install the benchmark environments first before installing `robovlms`. We also suggest create seperate virtual envs to prevent from conflicts.
@@ -289,7 +214,7 @@ Specify the tokenizer type, VLM type, and the paths to the pretrained models. If
 
 To start the training process, use `scripts/run.sh` followed by related configs. For example, to train a RoboPaligemma on CALVIN, use the following command:
 ```bash
-bash scripts/run.sh configs/calvin_finetune/configs/calvin_finetune/finetune_paligemma_cont-lstm-post_full-ft_text_vision_wd=0_ws-8_act-10.json
+bash scripts/run.sh configs/oxe_training/finetune_kosmos_cont-lstm-post_full-ft_text_vision_wd-0_use-hand_ws-16_act-10_bridge_finetune.json
 ```
 
 The `scripts/run.sh` script is the default training script, which assumes the use of `transformers==4.37.2` and `tokenizer==0.15.0`. However, certain Vision-Language Models (VLMs) may require different versions of `transformers`, `tokenizer`, or other dependencies. For example, to train with the Paligemma and MoonDream VLM, we need `transformers==4.44.0`. For Flamingo, we need `transformers==4.33.2`. For other VLMs, please refer to the respective documentation for the required versions.
@@ -447,15 +372,3 @@ Make sure that the paths to the checkpoint files and configuration are correct a
 ⚠️ Diffusion (Onging)
 ...
 
-**Welcome to contribute！**
-
-## Bibtex
-If you are interested in this work, consider to cite:
-```latex
-@article{li2023generalist,
-    title={Towards Generalist Robot Policies: What Matters in Building Vision-Language-Action Models},
-    author={Li, Xinghang and Li, Peiyan and Liu, Minghuan and Wang, Dong and Liu, Jirong and Kang, Bingyi and Ma, Xiao and Kong, Tao and Zhang, Hanbo and Liu, Huaping},
-    journal={arXiv preprint arXiv:2412.14058},
-    year={2024}
-}
-```

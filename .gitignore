@@ -198,3 +198,5 @@ runs/
 .vlms/
 .DS_Store
 .DS_Store?
+SimplerEnv/
+openvla/
