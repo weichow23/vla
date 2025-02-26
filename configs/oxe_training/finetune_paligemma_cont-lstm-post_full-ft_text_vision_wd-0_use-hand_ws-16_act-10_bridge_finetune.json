@@ -1,14 +1,14 @@
 {
-    "robovlm_name": "RoboKosMos",
+    "robovlm_name": "RoboPaligemma",
     "parent": null,
     "task_name": "bridge_only",
-    "model": "kosmos",
-    "model_url": "https://huggingface.co/microsoft/kosmos-2-patch14-224",
+    "model": "paligemma",
+    "model_url": "https://huggingface.co/google/paligemma2-3b-pt-224",
     "seq_len": 1,
     "image_size": 224,
     "image_mean": [0.48145466, 0.4578275, 0.40821073],
     "image_std": [0.26862954, 0.26130258, 0.27577711],
-    "window_size": 1,
+    "window_size": 8,
     "fwd_pred_next_n": 10,
     "arm_gripper_loss_ratio": 0.01,
     "cap_loss_ratio": 0.05,
@@ -38,8 +38,8 @@
     "model_load_path": null,
     "model_load_source": "torch",
     "resume": null,
-    "model_path": ".vlms/kosmos-2-patch14-224",
-    "model_config": ".vlms/kosmos-2-patch14-224/config.json",
+    "model_path": ".vlms/VLMs/paligemma-3b-pt-224",
+    "model_config": ".vlms/VLMs/paligemma-3b-pt-224/config.json",
     "train_setup": {
         "precision": "bf16",
         "predict_action": true,
@@ -86,15 +86,15 @@
     "fwd_head": null,
     "tokenizer": {
         "type": "AutoProcessor",
-        "pretrained_model_name_or_path": ".vlms/kosmos-2-patch14-224",
-        "tokenizer_type": "kosmos",
+        "pretrained_model_name_or_path": ".vlms/paligemma-3b-pt-224",
+        "tokenizer_type": "paligemma",
         "max_text_len": 256,
         "additional_special_tokens": null
     },
     "vlm": {
-        "type": "AutoModelForVision2Seq",
-        "name": "kosmos",
-        "pretrained_model_name_or_path": ".vlms/kosmos-2-patch14-224"
+        "type": "PaliGemmaForConditionalGeneration",
+        "pretrained_model_name_or_path": ".vlms/paligemma-3b-pt-224",
+        "name": "paligemma"
     },
     "trainer": {
         "accelerator": "gpu",
@@ -105,7 +105,7 @@
         "use_distributed_sampler": false,
         "log_every_n_steps": 10,
         "max_epochs": 5,
-        "val_check_interval": 1000000,
+        "val_check_interval": 10000,
         "check_val_every_n_epoch": null,
         "max_steps": 50000,
         "accumulate_grad_batches": 1
@@ -113,7 +113,7 @@
     "train_dataset": {
         "type": "OpenVLADataset",
         "data_root_dir": "/mnt/bn/magellan-product-audit/weic/data_hf/oxe",
-        "model_name": "kosmos",
+        "model_name": "qwen",
         "image_aug": true,
         "mode": "train",
         "data_mix": "bridge",
@@ -125,7 +125,7 @@
     "val_dataset": {
         "type": "OpenVLADataset",
         "data_root_dir": "/mnt/bn/magellan-product-audit/weic/data_hf/oxe",
-        "model_name": "kosmos",
+        "model_name": "qwen",
         "mode": "train",
         "data_mix": "bridge",
         "window_sample": "sliding",
