@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 import torchvision.transforms.functional as TF
 from data_preprocessing.gripper_classifier import BNHead, GripperClassifier
-from data_preprocessing.ee_tracks_extractionv2 import get_args_parser, init_DINO_model
+from data_preprocessing.ee_tracks_extractionv2_tfds import get_args_parser, init_DINO_model
 import wandb
 
 class ImageDataset(Dataset):

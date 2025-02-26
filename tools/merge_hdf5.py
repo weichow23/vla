@@ -52,7 +52,7 @@ def merge_hdf5(input_files, output_file):
             f.write(ep + "\n")
 
 if __name__ == '__main__':
-    data_path = "/lustre/fsw/portfolios/nvr/projects/nvr_av_foundations/STORRM/OXE/raw_cam_vla/"
+    data_path = "/PATH/TO/OXE/bridge_orig/raw_cam_vla/"
     h5_files = os.listdir(data_path)
     h5_files = [os.path.join(data_path, f) for f in h5_files if f.endswith('.h5') and not f.endswith('merged.h5')]
 

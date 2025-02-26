@@ -22,4 +22,4 @@ def merge_json(file_list, output_file):
 
 if __name__ == '__main__':
     jsons = ["data_preprocessing/meta_data/train/progress_dict.json", "data_preprocessing/meta_data/val/progress_dict.json"]
-    merge_json(jsons, "/lustre/fsw/portfolios/nvr/projects/nvr_av_foundations/STORRM/OXE/bridge_orig/camera_calibration.json")
+    merge_json(jsons, "/PATH/TO/OXE/bridge_orig/camera_calibration.json")

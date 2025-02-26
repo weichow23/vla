@@ -1,18 +1,18 @@
 ## Environment set up
 ```
-conda create -p /lustre/fsw/portfolios/nvr/users/yuewang/workspace/envs/
-conda activate /lustre/fsw/portfolios/nvr/users/yuewang/workspace/envs/camvla
+conda create -n camvla python=3.10
+conda activate camvla
 
-git clone https://github.com/Jay-Ye/camvla --recursive
+git clone https://github.com/xxx --recursive
 
-cd third_party/sam2/
-pip install -e .
+# cd third_party/sam2/
+# pip install -e .
 
-pip install -e ".[notebooks]"
+# pip install -e ".[notebooks]"
 
-cd checkpoints && \
-./download_ckpts.sh && \
-cd ..
+# cd checkpoints && \
+# ./download_ckpts.sh && \
+# cd ..
 
 pip install tensorflow
 pip install tensorflow_datasets
@@ -47,3 +47,5 @@ python data_preprocessing/ee_tracks_extractionv2_tfds.py \
     --gpu_id 0 \
     --data_path /PATH/TO/OXE \
 ```
+
+To resume from previous progress, run `python tools/global_progress_update.py` to generate a `progress_dict.json` file, which is used in `ee_tracks_extractionv2_tfds.py` to skip episoded already processed.

@@ -122,7 +122,7 @@ def get_args_parser():
     parser.add_argument("--dataset_name", type=str, default="bridge_orig")
     parser.add_argument("--trainval", type=str, default="val")
     parser.add_argument("--num_episodes", type=int, default=-1)
-    parser.add_argument("--data_path", type=str, default='/lustre/fsw/portfolios/nvr/projects/nvr_av_foundations/STORRM/OXE') # bridge_preprocessed
+    parser.add_argument("--data_path", type=str, default='/PATH/TO/OXE') # bridge_preprocessed
     parser.add_argument("--mul_cam", action="store_true", help="Calibrate all cameras we have in the dataset")
     # DINO related
     parser.add_argument("--DINO_model", type=str, default="vit_large_patch14_dinov2.lvd142m")

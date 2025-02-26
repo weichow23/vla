@@ -18,7 +18,7 @@ import math
 
 def get_args_parser():
     parser = argparse.ArgumentParser("End-effector tracking")
-    parser.add_argument("--data_path", type=str, default='/lustre/fsw/portfolios/nvr/projects/nvr_av_foundations/STORRM/bridge_preprocessed/') # /bridge_dataset/1.0.0
+    parser.add_argument("--data_path", type=str, default='STORRM/bridge_preprocessed/') # /bridge_dataset/1.0.0
     parser.add_argument("--trainval", type=str, default='val')
     ## DINO related
     parser.add_argument("--DINO_model", type=str, default="vit_base_patch14_dinov2.lvd142m")

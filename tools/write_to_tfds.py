@@ -55,8 +55,8 @@ def modify_tfrecord(input_file, output_file):
 
 
 if __name__ == "__main__":
-    raw_tfds_files = glob.glob(os.path.join("/lustre/fsw/portfolios/nvr/projects/nvr_av_foundations/STORRM/OXE/bridge_orig/1.0.0", "bridge_dataset-train.tfrecord-*"))
-    tgt_path = "/lustre/fsw/portfolios/nvr/projects/nvr_av_foundations/STORRM/OXE/bridge_mod/1.0.0"
+    raw_tfds_files = glob.glob(os.path.join("/PATH/TO/OXE/bridge_orig/1.0.0", "bridge_dataset-train.tfrecord-*"))
+    tgt_path = "/PATH/TO/OXE/bridge_mod/1.0.0"
     if not os.path.exists(tgt_path):
         os.makedirs(tgt_path)
     raw_tfds_files.sort()
