@@ -259,8 +259,6 @@ if __name__ == '__main__':
     with open(cam_metapath, 'r') as f:
         cam_meta = json.load(f)
 
-    breakpoint()
-
     cameras = []
     # subset = 100
     for idx, cam in enumerate(cam_meta.keys()):

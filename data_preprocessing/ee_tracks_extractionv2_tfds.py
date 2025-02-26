@@ -124,14 +124,18 @@ def get_args_parser():
     parser.add_argument("--num_episodes", type=int, default=-1)
     parser.add_argument("--data_path", type=str, default='/lustre/fsw/portfolios/nvr/projects/nvr_av_foundations/STORRM/OXE') # bridge_preprocessed
     parser.add_argument("--mul_cam", action="store_true", help="Calibrate all cameras we have in the dataset")
+    # DINO related
     parser.add_argument("--DINO_model", type=str, default="vit_large_patch14_dinov2.lvd142m")
     parser.add_argument("--stride", type=int, default=14)
     parser.add_argument("--patch_size", type=int, default=14)
     parser.add_argument("--img_size", type=int, default=798)
     parser.add_argument("--batch_size", type=int, default=128, help="this is actually the number of maximun images to process by DINOv2 at once")
+    # Gripper classifier related
     parser.add_argument("--classifier_type", type=str, default="BNHead")
     parser.add_argument("--classifier_model", type=str, default="data_preprocessing/classifier_ckpt/gripper_classifier_large_conv_v2_aug.pth")
+    # where to save
     parser.add_argument("--meta_path", type=str, default="data_preprocessing/meta_data/")
+    parser.add_argument("--raw_cam_vla_path", type=str, default="raw_cam_vla/", help="save raw results (correspondences, inliers, mean reprojection error, etc.)")
     parser.add_argument("--visualize", action="store_true")
     parser.add_argument("--vis_path", type=str, default="vis/")
     parser.add_argument("--num_gpus", type=int, default=torch.cuda.device_count(), help="Number of GPUs to use")
@@ -310,6 +314,9 @@ def main(args):
     args.meta_path = f"{args.meta_path}/{args.trainval}"
     if not os.path.exists(args.meta_path):
         os.makedirs(args.meta_path)
+    args.raw_cam_vla_path = f"{args.data_path}/{args.dataset_name}/{args.raw_cam_vla_path}"
+    if not os.path.exists(args.raw_cam_vla_path):
+        os.makedirs(args.raw_cam_vla_path)
 
     # debug only
     if args.num_episodes > 0:
@@ -435,7 +442,7 @@ def main(args):
                         "inliers": result[2] if result is not None else None,
                     }
                 )
-                add_data_hdf5(raw_estimated_data, f"{args.data_path}/raw_cam_vla/data_gpu_{args.gpu_id}.h5")
+                add_data_hdf5(raw_estimated_data, f"{args.raw_cam_vla_path}/data_gpu_{args.gpu_id}.h5")
 
                 del batched_images, gripper_masks, ee_traj, modified_masks
                 torch.cuda.empty_cache()
@@ -453,11 +460,13 @@ def main(args):
             #         save_dict_to_hdf5(raw_estimated_data, f)
             #     raw_estimated_data = {}
 
-    # if args.visualize:
-    #     videos = os.listdir(temp_path)
-    #     videos = [os.path.join(temp_path, v) for v in videos]
-    #     concat_videos_grid(videos, f"{args.vis_path}/all_videos.mp4")
-    #     os.system(f"rm -rf {temp_path}")
+    if args.visualize:
+        videos = os.listdir(temp_path)
+        videos = [os.path.join(temp_path, v) for v in videos]
+        # concat every 100 videos
+        for i in range(0, len(videos), 100):
+            concat_videos_grid(videos[i:i+100], f"{args.vis_path}/all_videos_{i}.mp4")
+        os.system(f"rm -rf {temp_path}")
 
 if __name__ == "__main__":
     parser = get_args_parser()

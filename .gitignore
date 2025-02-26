@@ -13,3 +13,5 @@ augmented_images/
 */features/
 
 *.html
+*.npy
+*.mp4
